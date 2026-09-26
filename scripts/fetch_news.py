@@ -2,6 +2,7 @@ import json
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
+import re
 
 FEEDS = [
     ("العراق", "https://news.google.com/rss/search?q=Iraq&hl=ar&gl=IQ&ceid=IQ:ar"),
@@ -30,13 +31,23 @@ for category, feed_url in FEEDS:
             source = item.findtext("source", "Google News").strip()
             pub_date = item.findtext("pubDate", "").strip()
 
+            description = item.findtext("description", "").strip()
+
+            # تنظيف وصف الخبر من أكواد HTML
+            summary = re.sub("<[^>]+>", "", description)
+            summary = summary.strip()
+
+            if not summary:
+                summary = title
+
             if title and link:
                 news.append({
                     "title": title,
                     "category": category,
-                    "summary": title,
+                    "summary": summary,
                     "source": source,
                     "url": link,
+                    "image": "",
                     "date": pub_date,
                     "updated": datetime.now(timezone.utc).isoformat()
                 })
