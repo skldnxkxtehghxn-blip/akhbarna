@@ -13,8 +13,7 @@ FEEDS = [
 ]
 
 NS = {
-    "media": "http://search.yahoo.com/mrss/",
-    "content": "http://purl.org/rss/1.0/modules/content/"
+    "media": "http://search.yahoo.com/mrss/"
 }
 
 news = []
@@ -26,26 +25,26 @@ def clean_html(text):
     return text.strip()
 
 def find_image(item, description):
-    # محاولة أخذ الصورة من media:content
     media = item.find("media:content", NS)
     if media is not None:
         url = media.get("url", "")
         if url:
             return url
 
-    # محاولة media:thumbnail
     thumb = item.find("media:thumbnail", NS)
     if thumb is not None:
         url = thumb.get("url", "")
         if url:
             return url
 
-    # محاولة استخراج أول صورة من الوصف
-    match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', description or "", re.I)
+    match = re.search(
+        r'<img[^>]+src=["\']([^"\']+)["\']',
+        description or "",
+        re.I
+    )
     if match:
         return match.group(1)
 
-    # محاولة enclosure
     enclosure = item.find("enclosure")
     if enclosure is not None:
         url = enclosure.get("url", "")
@@ -78,6 +77,27 @@ for category, feed_url in FEEDS:
             if not summary:
                 summary = title
 
-            # نخلي الملخص أطول، لكن بدون مبالغة
             if len(summary) > 700:
-                summary = summary[:700].rs
+                summary = summary[:700].rsplit(" ", 1)[0] + "..."
+
+            image = find_image(item, description)
+
+            if title and link:
+                news.append({
+                    "title": title,
+                    "category": category,
+                    "summary": summary,
+                    "source": source,
+                    "url": link,
+                    "image": image,
+                    "date": pub_date,
+                    "updated": datetime.now(timezone.utc).isoformat()
+                })
+
+    except Exception as e:
+        print(f"فشل جلب {category}: {e}")
+
+with open("news.json", "w", encoding="utf-8") as file:
+    json.dump(news, file, ensure_ascii=False, indent=2)
+
+print(f"تم جلب {len(news)} خبرًا.")
