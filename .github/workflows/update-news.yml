@@ -1,0 +1,33 @@
+name: تحديث أخبارنا
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: تحميل الملفات
+        uses: actions/checkout@v4
+
+      - name: إعداد بايثون
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: تشغيل تحديث الأخبار
+        run: python scripts/fetch_news.py
+
+      - name: حفظ الأخبار الجديدة
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add news.json
+          git diff --cached --quiet || git commit -m "تحديث الأخبار تلقائياً"
+          git push
