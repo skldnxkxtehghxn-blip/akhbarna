@@ -30,15 +30,10 @@ for category, feed_url in FEEDS:
             link = item.findtext("link", "").strip()
             source = item.findtext("source", "Google News").strip()
             pub_date = item.findtext("pubDate", "").strip()
-
             description = item.findtext("description", "").strip()
 
-            # تنظيف وصف الخبر من أكواد HTML
-            summary = re.sub("<[^>]+>", "", description)
-            summary = summary.strip()
-
-            if not summary:
-                summary = title
+            summary = re.sub("<[^>]+>", "", description).strip()
+            summary = summary or title
 
             if title and link:
                 news.append({
